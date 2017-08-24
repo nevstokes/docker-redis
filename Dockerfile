@@ -32,7 +32,22 @@ RUN set -euxo pipefail \
   && strip --strip-all /usr/local/bin/redis-*
 
 
-FROM alpine:3.6
+FROM alpine:3.6 as libs
+
+COPY --from=build /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
+
+RUN set -euxo pipefail \
+    \
+    # Requirements (assuming redis-cli needs the same as redis-server)
+    && echo '@community http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories \
+    && apk --update add upx@community \
+    && scanelf --nobanner --needed /usr/local/bin/redis-server | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | xargs apk add \
+    && upx -9 /usr/local/bin/redis-cli /usr/local/bin/redis-server \
+    && apk del --purge apk-tools upx \
+    && tar -czf lib.tar.gz /lib/*.so.*
+
+
+FROM busybox
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -40,10 +55,11 @@ ARG VCS_URL
 
 EXPOSE 6379
 
-ENTRYPOINT ["redis-server"]
+ENTRYPOINT ["redis-server", "--save \"\"", "--appendonly no"]
 HEALTHCHECK CMD test $(redis-cli ping) -ne 'PONG' || exit 0
 
-COPY --from=build /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
+COPY --from=libs /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
+COPY --from=libs /lib.tar.gz /
 
 RUN set -euxo pipefail \
     \
@@ -51,14 +67,10 @@ RUN set -euxo pipefail \
     && addgroup -S redis \
     && adduser -H -s /sbin/nologin -D -S -G redis redis \
     \
-    # Requirements
-    && apk update \
-    && scanelf --nobanner --needed `which redis-server` | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | xargs apk add --no-cache \
-    \
     # Tidy up
-    && rm -rf /var/cache /usr/sbin \
-    && find /usr/bin -type l | grep -Ev "/(find|test|xargs)" | xargs rm -f \
-    && find /bin -type l | grep -v /sh | xargs rm -f
+    && tar -xzf /lib.tar.gz \
+    && rm *.tar.gz \
+    && find /bin -type f | grep -Ev "/(sh|test)" | xargs rm -rf
 
 USER redis
 
