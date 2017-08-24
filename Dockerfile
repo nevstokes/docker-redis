@@ -74,7 +74,9 @@ RUN set -euxo pipefail \
 
 USER redis
 
-LABEL org.label-schema.build-date=$BUILD_DATE \
+LABEL maintainer="Nev Stokes <mail@nevstokes.com>" \
+      description="Beanstalkd general-purpose work queue" \
+      org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0" \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.vcs-url=$VCS_URL
