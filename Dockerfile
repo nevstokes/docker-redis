@@ -75,7 +75,7 @@ RUN set -euxo pipefail \
 USER redis
 
 LABEL maintainer="Nev Stokes <mail@nevstokes.com>" \
-      description="Beanstalkd general-purpose work queue" \
+      description="Simple non-persisting Redis image" \
       org.label-schema.build-date=$BUILD_DATE \
       org.label-schema.schema-version="1.0" \
       org.label-schema.vcs-ref=$VCS_REF \
