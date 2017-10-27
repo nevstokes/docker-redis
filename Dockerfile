@@ -59,8 +59,8 @@ ENTRYPOINT ["redis-server"]
 HEALTHCHECK CMD test $(redis-cli ping) -ne 'PONG' || exit 1
 
 LABEL maintainer="Nev Stokes <mail@nevstokes.com>" \
-        description="Beanstalkd general-purpose work queue" \
-        org.label-schema.build-date="$BUILD_DATE" \
-        org.label-schema.schema-version="1.0" \
-        org.label-schema.vcs-ref="$VCS_REF" \
-        org.label-schema.vcs-url="$VCS_URL"
+      description="Simple non-persisting Redis image" \
+      org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.schema-version="1.0" \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url=$VCS_URL
