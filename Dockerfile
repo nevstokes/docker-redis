@@ -40,7 +40,7 @@ RUN echo '@community http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /et
     && upx -9 /usr/local/bin/redis-cli /usr/local/bin/redis-server
 
 
-FROM nevstokes/busybox
+FROM nevstokes/base
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -51,12 +51,7 @@ EXPOSE 6379
 COPY --from=libs /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
 COPY --from=libs /lib/ld-musl-x86_64.so.1 /lib/
 
-RUN addgroup -S redis && adduser -H -s /sbin/nologin -D -S -G redis redis \
-    && ln -s /lib/ld-musl-x86_64.so.1 /lib/libc.musl-x86_64.so.1
-
-USER redis
 ENTRYPOINT ["redis-server"]
-HEALTHCHECK CMD test $(redis-cli ping) -ne 'PONG' || exit 1
 
 LABEL maintainer="Nev Stokes <mail@nevstokes.com>" \
       description="Simple non-persisting Redis image" \
