@@ -40,7 +40,7 @@ RUN echo '@community http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /et
     && upx -9 /usr/local/bin/redis-cli /usr/local/bin/redis-server
 
 
-FROM nevstokes/base
+FROM scratch
 
 ARG BUILD_DATE
 ARG VCS_REF
