@@ -2,13 +2,15 @@ FROM alpine:3.6 AS build
 
 COPY github-releases.xsl /
 
-RUN apk --update add \
-    gcc \
-    libressl \
-    libxslt-dev \
-    linux-headers \
-    make \
-    musl-dev
+RUN echo '@community http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories \
+    && apk --update add \
+        gcc \
+        libressl \
+        libxslt-dev \
+        linux-headers \
+        make \
+        musl-dev \
+        upx@community
 
 RUN mkdir -p /usr/src/redis \
     \
@@ -26,17 +28,7 @@ RUN cd /usr/src/redis \
     && make CFLAGS=-Os \
     && make install \
     \
-    && strip --strip-all /usr/local/bin/redis-*
-
-
-FROM alpine:3.6 as libs
-
-COPY --from=build /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
-COPY --from=build /var/cache/apk /var/cache/apk/
-
-RUN echo '@community http://dl-cdn.alpinelinux.org/alpine/edge/community' >> /etc/apk/repositories \
-    && apk --update add upx@community \
-    && scanelf --nobanner --needed /usr/local/bin/redis-cli /usr/local/bin/redis-server | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' | xargs apk add \
+    && strip --strip-all /usr/local/bin/redis-* \
     && upx -9 /usr/local/bin/redis-cli /usr/local/bin/redis-server
 
 
@@ -48,8 +40,8 @@ ARG VCS_URL
 
 EXPOSE 6379
 
-COPY --from=libs /usr/local/bin/redis-server /usr/local/bin/redis-cli /usr/local/bin/
-COPY --from=libs /lib/ld-musl-x86_64.so.1 /lib/
+COPY --from=build /usr/local/bin/redis-cli /usr/local/bin/redis-server /usr/local/bin/
+COPY --from=build /lib/ld-musl-x86_64.so.1 /lib/
 
 ENTRYPOINT ["redis-server"]
 
